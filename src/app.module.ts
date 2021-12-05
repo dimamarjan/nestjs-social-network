@@ -1,0 +1,46 @@
+import { Module } from '@nestjs/common';
+import { AuthModule } from './auth/auth.module';
+import { PostsModule } from './posts/posts.module';
+import { UsersModule } from './users/users.module';
+import { SequelizeModule, SequelizeModuleOptions } from '@nestjs/sequelize';
+import { Users } from './users/models/users.model';
+import { Posts } from './posts/models/posts.model';
+import { Filters } from './filters/model/filters.model';
+import { PostsFilters } from './posts/models/posts-filters.model';
+import { PostsMarks } from './posts/models/posts-marks';
+import { FiltersModule } from './filters/filters.module';
+import { S3Module } from './s3/s3.module';
+
+const dbOptions: SequelizeModuleOptions = {
+  dialect: 'postgres',
+  logging: false,
+  ssl: true,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
+  // define: { timestamps: false },
+  host: process.env.PGDATABASE_HOST,
+  port: Number(process.env.PGDATABASE_PORT),
+  username: process.env.PGDATABASE_USERNAME,
+  password: process.env.PGDATABASE_PASSWORD,
+  database: process.env.PGDATABASE_DATABASE,
+  models: [Users, Posts, PostsMarks, Filters, PostsFilters],
+  autoLoadModels: true,
+};
+
+@Module({
+  imports: [
+    SequelizeModule.forRoot(dbOptions),
+    AuthModule,
+    PostsModule,
+    UsersModule,
+    FiltersModule,
+    S3Module,
+  ],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
