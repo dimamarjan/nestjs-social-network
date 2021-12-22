@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Filters } from '../filters/model/filters.model';
-import { PostsFilters } from 'src/posts/models/posts-filters.model';
-import { PostsMarks } from 'src/posts/models/posts-marks';
+import { PostsFilters } from '../posts/models/posts-filters.model';
+import { PostsMarks } from '../posts/models/posts-marks';
 import { Posts } from '../posts/models/posts.model';
 import { Users } from './models/users.model';
 import { UsersService } from './users.service';

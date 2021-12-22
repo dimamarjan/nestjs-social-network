@@ -1,5 +1,4 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
 import { UsersService } from '../users/users.service';
 import { Users } from '../users/models/users.model';
@@ -10,6 +9,8 @@ import { S3Service } from '../s3/s3.service';
 import { UpdatePostsDto } from './dto/post-update.dto';
 import { UserIdDto } from './dto/post-user-id.dto';
 import { PostFilterDto } from './dto/post-filter.dto';
+import { Comments } from '../comments/model/commets.model';
+import { TokenHeandlerService } from '../common/services/token-heandker.service';
 
 @Injectable()
 export class PostsService {
@@ -18,7 +19,7 @@ export class PostsService {
     @InjectModel(Filters) private filtersRepository: typeof Filters,
     private s3Service: S3Service,
     private usersService: UsersService,
-    private jwtService: JwtService,
+    private tokenHeandlerService: TokenHeandlerService,
   ) {}
 
   async create(
@@ -27,7 +28,7 @@ export class PostsService {
     file: { bufer: Buffer },
   ) {
     try {
-      const reqUserId = await this.getUserId(accsesToken);
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const user = await this.usersService.findUserById({ userId: reqUserId });
       if (user) {
         const postedImage = await this.s3Service.s3upload(file);
@@ -65,7 +66,7 @@ export class PostsService {
 
   async remove(accsesToken: string, postId: string) {
     try {
-      const reqUserId: string = await this.getUserId(accsesToken);
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const post = await this.postsRepository.destroy({
         where: {
           postId,
@@ -90,7 +91,7 @@ export class PostsService {
     updatePostsDto: UpdatePostsDto,
   ) {
     try {
-      const reqUserId: string = await this.getUserId(accsesToken);
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const post = await this.postsRepository.update(updatePostsDto, {
         where: {
           postId,
@@ -111,13 +112,14 @@ export class PostsService {
 
   async getPosts(accsesToken: string) {
     try {
-      const reqUserId: string = await this.getUserId(accsesToken);
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const getUsersPosts = await this.postsRepository.findAll({
         where: { postOwner: reqUserId },
         include: [
           { model: Users, as: 'user' },
           { model: Users, as: 'markedUsers' },
           { model: Filters, as: 'filter' },
+          { model: Comments, as: 'comment' },
         ],
       });
       if (!getUsersPosts) {
@@ -131,7 +133,7 @@ export class PostsService {
 
   async markUsers(accsesToken: string, postId: string, userId: UserIdDto) {
     try {
-      const reqUserId = this.getUserId(accsesToken);
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const user = await this.usersService.findUserById(userId);
       const post = await this.postsRepository.findOne({
         where: {
@@ -139,14 +141,34 @@ export class PostsService {
           postOwner: reqUserId,
         },
       });
-      if (post) {
-        await post.$add('markedUsers', user);
-        return { message: 'user added to post' };
+      if (!post) {
+        throw new HttpException(
+          'not permitted or post not found',
+          HttpStatus.BAD_REQUEST,
+        );
       }
-      throw new HttpException(
-        'not permitted or post not found',
-        HttpStatus.BAD_REQUEST,
-      );
+      if (!user) {
+        throw new HttpException('user not found', HttpStatus.BAD_REQUEST);
+      }
+      await post.$add('markedUsers', user);
+      if (post.mark) {
+        const updatedList = post.mark;
+        if (updatedList.includes(user.userId)) {
+          return { message: 'user alredy added' };
+        }
+        updatedList.push(user.userId);
+        await this.postsRepository.update(
+          { mark: updatedList },
+          { where: { postId: post.postId } },
+        );
+      } else {
+        await this.postsRepository.update(
+          { mark: [user.userId] },
+          { where: { postId: post.postId } },
+        );
+      }
+      await post.$add('markedUsers', user);
+      return { message: 'user added to post' };
     } catch (error) {
       return error;
     }
@@ -154,7 +176,7 @@ export class PostsService {
 
   async unMarkUsers(accsesToken: string, postId: string, userId: UserIdDto) {
     try {
-      const reqUserId: string = this.getUserId(accsesToken);
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const user = await this.usersService.findUserById(userId);
       const post = await this.postsRepository.findOne({
         where: {
@@ -162,14 +184,31 @@ export class PostsService {
           postOwner: reqUserId,
         },
       });
-      if (post) {
-        await post.$remove('markedUsers', user);
-        return { message: 'user removed from post' };
+
+      if (!post) {
+        throw new HttpException(
+          'not permitted or post not found',
+          HttpStatus.BAD_REQUEST,
+        );
       }
-      throw new HttpException(
-        'not permitted or post not found',
-        HttpStatus.BAD_REQUEST,
-      );
+      if (!user) {
+        throw new HttpException('user not found', HttpStatus.BAD_REQUEST);
+      }
+      if (post.mark) {
+        const updatedList = post.mark;
+        if (updatedList.includes(user.userId)) {
+          const removeUser = updatedList.filter((user) => !user);
+          await this.postsRepository.update(
+            { mark: removeUser },
+            { where: { postId: post.postId } },
+          );
+          await post.$remove('markedUsers', user);
+          return { message: 'user removed from post' };
+        }
+        return { message: 'user not in mark list' };
+      } else {
+        return { message: 'user not in mark list' };
+      }
     } catch (error) {
       return error;
     }
@@ -177,7 +216,7 @@ export class PostsService {
 
   async getMarkMePosts(accsesToken: string) {
     try {
-      const reqUserId: string = await this.getUserId(accsesToken);
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const posts = await this.postsRepository.findAll({
         include: [
           {
@@ -204,7 +243,7 @@ export class PostsService {
     postFilterDto: PostFilterDto,
   ) {
     try {
-      const reqUserId: string = await this.getUserId(accsesToken);
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const filter = await this.filtersRepository.findOne({
         where: postFilterDto,
       });
@@ -236,7 +275,7 @@ export class PostsService {
     postFilterDto: PostFilterDto,
   ) {
     try {
-      const reqUserId: string = await this.getUserId(accsesToken);
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const filter = await this.filtersRepository.findOne({
         where: postFilterDto,
       });
@@ -260,11 +299,5 @@ export class PostsService {
     } catch (error) {
       return error;
     }
-  }
-
-  getUserId(accsesToken: string) {
-    const key = accsesToken.split(' ')[1];
-    const user = this.jwtService.verify(key);
-    return user.userId;
   }
 }

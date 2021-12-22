@@ -20,10 +20,17 @@ import { UpdatePostsDto } from './dto/post-update.dto';
 import { UserIdDto } from './dto/post-user-id.dto';
 import { PostFilterDto } from './dto/post-filter.dto';
 import { ValidationPipe } from '../pipes/validation.pipe';
+import { CreateCommentsDto } from '../comments/dto/comments.dto';
+import { UpdateCommentsDto } from '../comments/dto/comments-update.dto';
+import { DeleteCommentsDto } from '../comments/dto/comment-delete.dto';
+import { CommentsService } from '../comments/comments.service';
 
 @Controller('posts')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(
+    private readonly postsService: PostsService,
+    private readonly commentsService: CommentsService,
+  ) {}
 
   @UseGuards(JwtAuthGuard)
   @Post()
@@ -110,6 +117,48 @@ export class PostsController {
       accsesToken,
       postId,
       postFilterDto,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/:id/addcomment')
+  addComment(
+    @Param('id') postId: string,
+    @Headers('authorization') accsesToken: string,
+    @Body() createCommentsDto: CreateCommentsDto,
+  ) {
+    return this.commentsService.addPostComment(
+      accsesToken,
+      postId,
+      createCommentsDto,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('/:id/comments')
+  updateComment(
+    @Param('id') postId: string,
+    @Headers('authorization') accsesToken: string,
+    @Body() updateCommentsDto: UpdateCommentsDto,
+  ) {
+    return this.commentsService.updatePostComment(
+      accsesToken,
+      postId,
+      updateCommentsDto,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('/:id/comments')
+  deleteComment(
+    @Param('id') postId: string,
+    @Headers('authorization') accsesToken: string,
+    @Body() deleteCommentsDto: DeleteCommentsDto,
+  ) {
+    return this.commentsService.deletePostComment(
+      accsesToken,
+      postId,
+      deleteCommentsDto,
     );
   }
 }

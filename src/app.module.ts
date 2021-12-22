@@ -10,6 +10,8 @@ import { PostsFilters } from './posts/models/posts-filters.model';
 import { PostsMarks } from './posts/models/posts-marks';
 import { FiltersModule } from './filters/filters.module';
 import { S3Module } from './s3/s3.module';
+import { CommentsModule } from './comments/comments.module';
+import { Comments } from './comments/model/commets.model';
 
 const dbOptions: SequelizeModuleOptions = {
   dialect: 'postgres',
@@ -21,13 +23,12 @@ const dbOptions: SequelizeModuleOptions = {
       rejectUnauthorized: false,
     },
   },
-  // define: { timestamps: false },
   host: process.env.PGDATABASE_HOST,
   port: Number(process.env.PGDATABASE_PORT),
   username: process.env.PGDATABASE_USERNAME,
   password: process.env.PGDATABASE_PASSWORD,
   database: process.env.PGDATABASE_DATABASE,
-  models: [Users, Posts, PostsMarks, Filters, PostsFilters],
+  models: [Users, Posts, PostsMarks, Filters, PostsFilters, Comments],
   autoLoadModels: true,
 };
 
@@ -39,6 +40,7 @@ const dbOptions: SequelizeModuleOptions = {
     UsersModule,
     FiltersModule,
     S3Module,
+    CommentsModule,
   ],
   controllers: [],
   providers: [],

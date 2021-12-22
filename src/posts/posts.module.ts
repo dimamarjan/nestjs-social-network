@@ -7,13 +7,17 @@ import { Users } from '../users/models/users.model';
 import { AuthModule } from '../auth/auth.module';
 import { Filters } from '../filters/model/filters.model';
 import { PostsFilters } from './models/posts-filters.model';
-import { UsersModule } from 'src/users/users.module';
+import { UsersModule } from '../users/users.module';
 import { PostsMarks } from './models/posts-marks';
-import { S3Module } from 'src/s3/s3.module';
+import { S3Module } from '../s3/s3.module';
+import { Comments } from '../comments/model/commets.model';
+import { CommentsModule } from '../comments/comments.module';
+import { CommentsService } from '../comments/comments.service';
+import { TokenHeandlerService } from '../common/services/token-heandker.service';
 
 @Module({
   controllers: [PostsController],
-  providers: [PostsService],
+  providers: [PostsService, CommentsService, TokenHeandlerService],
   imports: [
     AuthModule,
     UsersModule,
@@ -23,8 +27,10 @@ import { S3Module } from 'src/s3/s3.module';
       PostsMarks,
       Filters,
       PostsFilters,
+      Comments,
     ]),
     S3Module,
+    CommentsModule,
   ],
 })
 export class PostsModule {}

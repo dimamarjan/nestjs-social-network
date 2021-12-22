@@ -10,7 +10,7 @@ import { PostsMarks } from '../../posts/models/posts-marks';
 import { Posts } from '../../posts/models/posts.model';
 import { IUsers } from '../interfaces/user.interface';
 
-@Table
+@Table({ tableName: 'users' })
 export class Users extends Model<Users, IUsers> {
   @Column({
     type: DataType.STRING,

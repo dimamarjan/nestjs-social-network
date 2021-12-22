@@ -4,6 +4,7 @@ import {
   Column,
   DataType,
   ForeignKey,
+  HasMany,
   Model,
   Table,
 } from 'sequelize-typescript';
@@ -12,8 +13,9 @@ import { IPosts } from '../interfaces/posts.interface';
 import { Filters } from '../../filters/model/filters.model';
 import { PostsFilters } from './posts-filters.model';
 import { PostsMarks } from './posts-marks';
+import { Comments } from '../../comments/model/commets.model';
 
-@Table
+@Table({ tableName: 'posts' })
 export class Posts extends Model<Posts, IPosts> {
   @Column({
     type: DataType.UUID,
@@ -32,8 +34,8 @@ export class Posts extends Model<Posts, IPosts> {
   @Column({ type: DataType.STRING, allowNull: true })
   imageSlug: string;
 
-  @Column({ type: DataType.STRING, allowNull: true })
-  mark: string;
+  @Column({ type: DataType.ARRAY(DataType.STRING), allowNull: true })
+  mark: string[];
 
   @ForeignKey(() => Users)
   @Column({
@@ -50,6 +52,9 @@ export class Posts extends Model<Posts, IPosts> {
   @BelongsToMany(() => Filters, () => PostsFilters)
   filter: Filters[];
 
+  @HasMany(() => Comments)
+  comment: Comments[];
+
   toJSON() {
     return {
       postId: this.postId,
@@ -57,6 +62,7 @@ export class Posts extends Model<Posts, IPosts> {
       filter: this.filter,
       author: this.user,
       markedUsers: this.markedUsers,
+      comments: this.comment,
     };
   }
 }
