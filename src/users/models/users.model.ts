@@ -35,6 +35,20 @@ export class Users extends Model<Users, IUsers> {
   @Column({ type: DataType.STRING, allowNull: false, defaultValue: 'home' })
   authType: string;
 
+  @Column({
+    type: DataType.ARRAY(DataType.STRING),
+    allowNull: false,
+    defaultValue: [],
+  })
+  subscribes: string[];
+
+  @Column({
+    type: DataType.ARRAY(DataType.STRING),
+    allowNull: false,
+    defaultValue: [],
+  })
+  folovers: string[];
+
   @HasMany(() => Posts)
   postOwner: Posts[];
 

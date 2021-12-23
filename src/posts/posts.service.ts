@@ -206,7 +206,7 @@ export class PostsService {
       if (post.mark) {
         const updatedList = post.mark;
         if (updatedList.includes(user.userId)) {
-          const removeUser = updatedList.filter((user) => !user);
+          const removeUser = updatedList.filter((id) => id !== user.userId);
           await this.postsRepository.update(
             { mark: removeUser },
             { where: { postId: post.postId } },

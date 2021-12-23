@@ -6,4 +6,6 @@ export interface IUsers {
   readonly lastName?: string;
   readonly localRegistration?: boolean;
   readonly authType?: string;
+  readonly subscribes?: string[];
+  readonly folovers?: string[];
 }
