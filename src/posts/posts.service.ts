@@ -11,6 +11,8 @@ import { UserIdDto } from './dto/post-user-id.dto';
 import { PostFilterDto } from './dto/post-filter.dto';
 import { Comments } from '../comments/model/commets.model';
 import { TokenHeandlerService } from '../common/services/token-heandker.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Op } from 'sequelize';
 
 @Injectable()
 export class PostsService {
@@ -20,6 +22,7 @@ export class PostsService {
     private s3Service: S3Service,
     private usersService: UsersService,
     private tokenHeandlerService: TokenHeandlerService,
+    private marksEventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -114,7 +117,9 @@ export class PostsService {
     try {
       const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
       const getUsersPosts = await this.postsRepository.findAll({
-        where: { postOwner: reqUserId },
+        where: {
+          postOwner: reqUserId,
+        },
         include: [
           { model: Users, as: 'user' },
           { model: Users, as: 'markedUsers' },
@@ -122,8 +127,8 @@ export class PostsService {
           { model: Comments, as: 'comment' },
         ],
       });
-      if (!getUsersPosts) {
-        return { message: 'any posts yet :)' };
+      if (getUsersPosts.length === 0) {
+        return { message: 'no posts yet :)' };
       }
       return getUsersPosts;
     } catch (error) {
@@ -161,6 +166,7 @@ export class PostsService {
           { mark: updatedList },
           { where: { postId: post.postId } },
         );
+        this.marksEventEmitter.emit('markUser', user, post);
       } else {
         await this.postsRepository.update(
           { mark: [user.userId] },
@@ -181,7 +187,10 @@ export class PostsService {
       const post = await this.postsRepository.findOne({
         where: {
           postId,
-          postOwner: reqUserId,
+          [Op.or]: [
+            { postOwner: reqUserId },
+            { mark: { [Op.contains]: [reqUserId] } },
+          ],
         },
       });
 
@@ -228,7 +237,7 @@ export class PostsService {
           },
         ],
       });
-      if (!posts) {
+      if (posts.length === 0) {
         return { message: 'no marked posts' };
       }
       return posts;

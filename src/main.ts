@@ -14,7 +14,7 @@ async function bootstrap() {
       cert: fs.readFileSync(process.env.SSL_PUBLIC_KEY),
     };
     https.createServer(httpsOptions, server).listen(443);
-    console.log(console.log('srever is runing on PORT:', 443));
+    console.log('srever is runing on PORT:', 443);
   } catch {
     const PORT = process.env.PORT || 3000;
     const app = await NestFactory.create(AppModule);

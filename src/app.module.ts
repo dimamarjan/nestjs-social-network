@@ -12,6 +12,7 @@ import { FiltersModule } from './filters/filters.module';
 import { S3Module } from './s3/s3.module';
 import { CommentsModule } from './comments/comments.module';
 import { Comments } from './comments/model/commets.model';
+import { NotifyMailerModule } from './common/services/mailer/mailer.module';
 
 const dbOptions: SequelizeModuleOptions = {
   dialect: 'postgres',
@@ -41,6 +42,7 @@ const dbOptions: SequelizeModuleOptions = {
     FiltersModule,
     S3Module,
     CommentsModule,
+    NotifyMailerModule,
   ],
   controllers: [],
   providers: [],

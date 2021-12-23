@@ -14,10 +14,17 @@ import { Comments } from '../comments/model/commets.model';
 import { CommentsModule } from '../comments/comments.module';
 import { CommentsService } from '../comments/comments.service';
 import { TokenHeandlerService } from '../common/services/token-heandker.service';
+import { NotifyMailerService } from '../common/services/mailer/mailer.service';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   controllers: [PostsController],
-  providers: [PostsService, CommentsService, TokenHeandlerService],
+  providers: [
+    PostsService,
+    CommentsService,
+    TokenHeandlerService,
+    NotifyMailerService,
+  ],
   imports: [
     AuthModule,
     UsersModule,
@@ -31,6 +38,7 @@ import { TokenHeandlerService } from '../common/services/token-heandker.service'
     ]),
     S3Module,
     CommentsModule,
+    EventEmitterModule.forRoot(),
   ],
 })
 export class PostsModule {}
