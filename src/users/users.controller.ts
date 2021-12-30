@@ -7,6 +7,7 @@ import {
   Headers,
   Body,
   Delete,
+  Get,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/auth-jwt.guard';
 import { SubUserDto } from './dto/user-subscribe.dto';
@@ -17,7 +18,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Post('/user')
+  @Get('/user')
   @UsePipes(ValidationPipe)
   getUser(@Headers('authorization') accsesToken: string) {
     return this.usersService.getUsers(accsesToken);

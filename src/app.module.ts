@@ -15,6 +15,9 @@ import { Comments } from './comments/model/commets.model';
 import { NotifyMailerModule } from './common/services/mailer/mailer.module';
 import { UsersSubscribers } from './users/models/users-subscribers.model';
 import { UsersFolovers } from './users/models/users-folovers.model';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { TokenHeandlerService } from './common/services/token-heandker.service';
 
 const dbOptions: SequelizeModuleOptions = {
   dialect: 'postgres',
@@ -54,8 +57,9 @@ const dbOptions: SequelizeModuleOptions = {
     S3Module,
     CommentsModule,
     NotifyMailerModule,
+    SequelizeModule.forFeature([Posts, Users]),
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AppController],
+  providers: [TokenHeandlerService, AppService],
 })
 export class AppModule {}
