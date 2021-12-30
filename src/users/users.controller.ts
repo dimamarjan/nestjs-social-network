@@ -15,6 +15,14 @@ import { UsersService } from './users.service';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Post('/user')
+  // @UsePipes(ValidationPipe)
+  getUser(@Headers('authorization') accsesToken: string) {
+    return this.usersService.getUsers(accsesToken);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post('/subscribe')
   @UsePipes(ValidationPipe)

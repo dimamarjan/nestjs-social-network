@@ -12,7 +12,7 @@ import { Users } from '../../users/models/users.model';
 import { IPosts } from '../interfaces/posts.interface';
 import { Filters } from '../../filters/model/filters.model';
 import { PostsFilters } from './posts-filters.model';
-import { PostsMarks } from './posts-marks';
+import { PostsMarks } from './posts-marks.model';
 import { Comments } from '../../comments/model/commets.model';
 
 @Table({ tableName: 'posts' })
@@ -39,7 +39,7 @@ export class Posts extends Model<Posts, IPosts> {
 
   @ForeignKey(() => Users)
   @Column({
-    type: DataType.STRING,
+    type: DataType.UUID,
   })
   postOwner: string;
 

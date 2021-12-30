@@ -8,7 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 import { Filters } from '../filters/model/filters.model';
 import { PostsFilters } from './models/posts-filters.model';
 import { UsersModule } from '../users/users.module';
-import { PostsMarks } from './models/posts-marks';
+import { PostsMarks } from './models/posts-marks.model';
 import { S3Module } from '../s3/s3.module';
 import { Comments } from '../comments/model/commets.model';
 import { CommentsModule } from '../comments/comments.module';

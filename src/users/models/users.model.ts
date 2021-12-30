@@ -6,14 +6,16 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
-import { PostsMarks } from '../../posts/models/posts-marks';
+import { PostsMarks } from '../../posts/models/posts-marks.model';
 import { Posts } from '../../posts/models/posts.model';
 import { IUsers } from '../interfaces/user.interface';
+import { UsersFolovers } from './users-folovers.model';
+import { UsersSubscribers } from './users-subscribers.model';
 
 @Table({ tableName: 'users' })
 export class Users extends Model<Users, IUsers> {
   @Column({
-    type: DataType.STRING,
+    type: DataType.UUID,
     defaultValue: DataType.UUIDV4,
     unique: true,
     primaryKey: true,
@@ -35,27 +37,17 @@ export class Users extends Model<Users, IUsers> {
   @Column({ type: DataType.STRING, allowNull: false, defaultValue: 'home' })
   authType: string;
 
-  @Column({
-    type: DataType.ARRAY(DataType.STRING),
-    allowNull: false,
-    defaultValue: [],
-  })
-  subscribes: string[];
-
-  @Column({
-    type: DataType.ARRAY(DataType.STRING),
-    allowNull: false,
-    defaultValue: [],
-  })
-  folovers: string[];
-
   @HasMany(() => Posts)
   postOwner: Posts[];
 
   @BelongsToMany(() => Posts, () => PostsMarks)
   user: Posts[];
 
-  version: false;
+  @HasMany(() => UsersSubscribers)
+  subscriber: UsersSubscribers[];
+
+  @HasMany(() => UsersFolovers)
+  targetUser: UsersSubscribers[];
 
   toJSON() {
     return {
@@ -63,6 +55,8 @@ export class Users extends Model<Users, IUsers> {
       email: this.email,
       firstName: this.firstName,
       lastName: this.lastName,
+      subscribtions: this.subscriber,
+      // folovers: this.folovers,
     };
   }
 }

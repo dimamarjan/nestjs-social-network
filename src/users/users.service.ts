@@ -5,13 +5,24 @@ import { CreateUsersDto } from '../auth/dto/user-create.dto';
 import { UserIdDto } from '../posts/dto/post-user-id.dto';
 import { Users } from './models/users.model';
 import { SubUserDto } from './dto/user-subscribe.dto';
+import { UsersSubscribers } from './models/users-subscribers.model';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(Users) private usersRepository: typeof Users,
+    @InjectModel(UsersSubscribers)
+    private usersSubscribersRepository: typeof UsersSubscribers,
     private tokenHeandlerService: TokenHeandlerService,
   ) {}
+
+  async getUsers(accsesToken: string) {
+    const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
+    return await this.usersRepository.findOne({
+      where: { userId: reqUserId },
+      include: { all: true },
+    });
+  }
 
   async createUsers(createUserDto: CreateUsersDto) {
     return await this.usersRepository.create(createUserDto);
@@ -27,31 +38,22 @@ export class UsersService {
         where: { userId: subUserDto.userId },
       });
       if (user && subUser) {
-        if (user.subscribes.length === 0 && subUser.folovers.length === 0) {
-          user.subscribes = [subUserDto.userId];
-          subUser.folovers = [reqUserId];
-          await user.save();
-          await subUser.save();
-          return {
-            message: `You successfully subscribed to ${subUser.firstName} newsletter`,
-          };
+        const getUserSubs = await user.$get('subscriber', { raw: true });
+        const arrSubs = getUserSubs.map((sub) => sub.folover);
+        if (arrSubs.includes(user.userId)) {
+          throw new HttpException(
+            'You already subscribed to user',
+            HttpStatus.BAD_REQUEST,
+          );
         }
-        if (
-          !user.subscribes.includes(subUserDto.userId) &&
-          !subUser.folovers.includes(reqUserId)
-        ) {
-          user.subscribes.push(subUserDto.userId);
-          subUser.folovers.push(reqUserId);
-          await user.save();
-          await subUser.save();
-          return {
-            message: `You successfully subscribed to ${subUser.firstName} newsletter`,
-          };
-        }
-        throw new HttpException(
-          'User allredy subscribed',
-          HttpStatus.BAD_REQUEST,
-        );
+        const subscribeRecord = await this.usersSubscribersRepository.create();
+        await subscribeRecord.$set('subscriber', user);
+        await subscribeRecord.update({
+          userId: subUser.userId,
+        });
+        return {
+          message: `You successfully subscribed to ${subUser.firstName} ${subUser.lastName} newsletter`,
+        };
       }
       throw new HttpException('User not found..', HttpStatus.BAD_REQUEST);
     } catch (error) {
@@ -69,26 +71,20 @@ export class UsersService {
         where: { userId: subUserDto.userId },
       });
       if (user && subUser) {
-        if (
-          user.subscribes.includes(subUserDto.userId) &&
-          subUser.folovers.includes(reqUserId)
-        ) {
-          const newSubList = user.subscribes.filter(
-            (user) => user !== subUserDto.userId,
-          );
-          const newFoloverList = subUser.folovers.filter(
-            (user) => user !== reqUserId,
-          );
-          user.subscribes = newSubList;
-          subUser.folovers = newFoloverList;
-          await user.save();
-          await subUser.save();
+        const subscribeRecord = await this.usersSubscribersRepository.findOne({
+          where: {
+            folover: user.userId,
+            userId: subUser.userId,
+          },
+        });
+        if (subscribeRecord) {
+          await subscribeRecord.destroy();
           return {
-            message: `You successfully unsubscribed from ${subUser.firstName} newsletter`,
+            message: `You successfully unsubscribed from ${subUser.firstName} ${subUser.lastName} newsletter`,
           };
         }
         throw new HttpException(
-          'No subscription on this user',
+          'You already unsubscribed from user',
           HttpStatus.BAD_REQUEST,
         );
       }
