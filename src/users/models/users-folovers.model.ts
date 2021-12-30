@@ -1,4 +1,5 @@
 import {
+  BelongsTo,
   Column,
   DataType,
   ForeignKey,
@@ -19,5 +20,17 @@ export class UsersFolovers extends Model<UsersFolovers> {
 
   @ForeignKey(() => Users)
   @Column({ type: DataType.UUID })
-  folovers: string;
+  subscriber: string;
+
+  @Column({ type: DataType.UUID })
+  userId: string;
+
+  @BelongsTo(() => Users)
+  folover: Users;
+
+  toJSON() {
+    return {
+      userId: this.userId,
+    };
+  }
 }

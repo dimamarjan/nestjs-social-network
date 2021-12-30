@@ -6,6 +6,7 @@ import { UserIdDto } from '../posts/dto/post-user-id.dto';
 import { Users } from './models/users.model';
 import { SubUserDto } from './dto/user-subscribe.dto';
 import { UsersSubscribers } from './models/users-subscribers.model';
+import { UsersFolovers } from './models/users-folovers.model';
 
 @Injectable()
 export class UsersService {
@@ -13,6 +14,8 @@ export class UsersService {
     @InjectModel(Users) private usersRepository: typeof Users,
     @InjectModel(UsersSubscribers)
     private usersSubscribersRepository: typeof UsersSubscribers,
+    @InjectModel(UsersFolovers)
+    private usersFoloversRepositories: typeof UsersFolovers,
     private tokenHeandlerService: TokenHeandlerService,
   ) {}
 
@@ -47,15 +50,19 @@ export class UsersService {
           );
         }
         const subscribeRecord = await this.usersSubscribersRepository.create();
-        await subscribeRecord.$set('subscriber', user);
-        await subscribeRecord.update({
-          userId: subUser.userId,
-        });
+        await subscribeRecord.$set('subscriber', user.userId);
+        await subscribeRecord.update({ userId: subUser.userId });
+        const foloverRecord = await this.usersFoloversRepositories.create();
+        await foloverRecord.$set('folover', subUser.userId);
+        await foloverRecord.update({ userId: user.userId });
         return {
           message: `You successfully subscribed to ${subUser.firstName} ${subUser.lastName} newsletter`,
         };
       }
-      throw new HttpException('User not found..', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'User not found in folovers/subscribers lists..',
+        HttpStatus.BAD_REQUEST,
+      );
     } catch (error) {
       return error;
     }
@@ -77,8 +84,15 @@ export class UsersService {
             userId: subUser.userId,
           },
         });
-        if (subscribeRecord) {
+        const foloverRecord = await this.usersSubscribersRepository.findOne({
+          where: {
+            subscriber: subUser.userId,
+            userId: user.userId,
+          },
+        });
+        if (subscribeRecord && foloverRecord) {
           await subscribeRecord.destroy();
+          await foloverRecord.destroy();
           return {
             message: `You successfully unsubscribed from ${subUser.firstName} ${subUser.lastName} newsletter`,
           };
@@ -88,7 +102,10 @@ export class UsersService {
           HttpStatus.BAD_REQUEST,
         );
       }
-      throw new HttpException('User not found..', HttpStatus.BAD_REQUEST);
+      throw new HttpException(
+        'User not found in folovers|subscribers lists..',
+        HttpStatus.BAD_REQUEST,
+      );
     } catch (error) {
       return error;
     }

@@ -18,7 +18,7 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Post('/user')
-  // @UsePipes(ValidationPipe)
+  @UsePipes(ValidationPipe)
   getUser(@Headers('authorization') accsesToken: string) {
     return this.usersService.getUsers(accsesToken);
   }

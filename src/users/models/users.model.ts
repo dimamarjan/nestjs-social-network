@@ -47,7 +47,7 @@ export class Users extends Model<Users, IUsers> {
   subscriber: UsersSubscribers[];
 
   @HasMany(() => UsersFolovers)
-  targetUser: UsersSubscribers[];
+  folover: UsersFolovers[];
 
   toJSON() {
     return {
@@ -56,7 +56,7 @@ export class Users extends Model<Users, IUsers> {
       firstName: this.firstName,
       lastName: this.lastName,
       subscribtions: this.subscriber,
-      // folovers: this.folovers,
+      folovers: this.folover,
     };
   }
 }
