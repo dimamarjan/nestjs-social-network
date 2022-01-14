@@ -21,8 +21,29 @@ export class NotifyMailerService {
     }
   }
 
+  async sendSubRequest(subUser: UserDto, folover: UserDto) {
+    try {
+      await this.mailerService.sendMail({
+        to: subUser.email,
+        from: process.env.MAIL_USER,
+        subject: 'Someone wants to following you!',
+        text: `
+        Hi ${subUser.firstName}!
+        ${folover.firstName} ${folover.lastName} wants to following you.
+        `,
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   @OnEvent('markUser')
-  public async sendNotify(user: UserDto, post: PostDto) {
+  public sendNotify(user: UserDto, post: PostDto) {
     this.sendEmailAdd(user, post);
+  }
+
+  @OnEvent('subscribeRequest')
+  public sendUserReq(subUser: UserDto, folover: UserDto) {
+    this.sendSubRequest(subUser, folover);
   }
 }

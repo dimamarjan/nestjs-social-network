@@ -7,6 +7,8 @@ import { Users } from './models/users.model';
 import { SubUserDto } from './dto/user-subscribe.dto';
 import { UsersSubscribers } from './models/users-subscribers.model';
 import { UsersFolovers } from './models/users-folovers.model';
+import { SubscribeRequests } from './models/users-subscribe-requests.model';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UsersService {
@@ -16,10 +18,13 @@ export class UsersService {
     private usersSubscribersRepository: typeof UsersSubscribers,
     @InjectModel(UsersFolovers)
     private usersFoloversRepositories: typeof UsersFolovers,
+    @InjectModel(SubscribeRequests)
+    private subscribeRequests: typeof SubscribeRequests,
     private tokenHeandlerService: TokenHeandlerService,
+    private subEventEmitter: EventEmitter2,
   ) {}
 
-  async getUsers(accsesToken: string) {
+  async getMyPage(accsesToken: string) {
     const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
     return await this.usersRepository.findOne({
       where: { userId: reqUserId },
@@ -41,28 +46,111 @@ export class UsersService {
         where: { userId: subUserDto.userId },
       });
       if (user && subUser) {
-        const getUserSubs = await user.$get('subscriber', { raw: true });
-        const arrSubs = getUserSubs.map((sub) => sub.folover);
-        if (arrSubs.includes(user.userId)) {
+        const isExistSubRequest = await this.subscribeRequests.findOne({
+          where: {
+            user: subUser.userId,
+            subUserId: user.userId,
+          },
+        });
+        const isSubscribed = await this.usersRepository.findOne({
+          where: {
+            userId: user.userId,
+          },
+          include: {
+            model: UsersSubscribers,
+            as: 'subscriber',
+            where: {
+              userId: subUser.userId,
+            },
+          },
+        });
+        if (isExistSubRequest || isSubscribed) {
           throw new HttpException(
-            'You already subscribed to user',
+            'Subscribe request already exist or user subscribed',
             HttpStatus.BAD_REQUEST,
           );
         }
-        const subscribeRecord = await this.usersSubscribersRepository.create();
-        await subscribeRecord.$set('subscriber', user.userId);
-        await subscribeRecord.update({ userId: subUser.userId });
-        const foloverRecord = await this.usersFoloversRepositories.create();
-        await foloverRecord.$set('folover', subUser.userId);
-        await foloverRecord.update({ userId: user.userId });
+        const subRequest = await this.subscribeRequests.create();
+        await subRequest.update({
+          user: subUser.userId,
+          subUserId: user.userId,
+        });
+        await subUser.$add('subRequests', subRequest);
+        this.subEventEmitter.emit('subscribeRequest', user, subUser);
         return {
-          message: `You successfully subscribed to ${subUser.firstName} ${subUser.lastName} newsletter`,
+          message: `Subscribe request successfully sended to ${subUser.firstName} ${subUser.lastName} newsletter`,
         };
       }
-      throw new HttpException(
-        'User not found in folovers/subscribers lists..',
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new HttpException('User not found..', HttpStatus.BAD_REQUEST);
+    } catch (error) {
+      return error;
+    }
+  }
+
+  async subscribeAccept(accsesToken: string, subRequestId: string) {
+    try {
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
+      const user = await this.usersRepository.findOne({
+        where: { userId: reqUserId },
+      });
+      const subRequest = await this.subscribeRequests.findOne({
+        where: {
+          user: user.userId,
+          requestId: subRequestId,
+        },
+      });
+      if (!subRequest) {
+        throw new HttpException(
+          'Subscribe request not found',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const subUser = await this.usersRepository.findOne({
+        where: { userId: subRequest.subUserId },
+      });
+      if (user && subUser) {
+        const subscribeRecord = await this.usersSubscribersRepository.create();
+        await subscribeRecord.$set('subscriber', subUser.userId);
+        await subscribeRecord.update({ userId: user.userId });
+        const foloverRecord = await this.usersFoloversRepositories.create();
+        await foloverRecord.$set('folover', user.userId);
+        await foloverRecord.update({ userId: subUser.userId });
+        await subRequest.destroy();
+        return {
+          message: `Now ${subUser.firstName} ${subUser.lastName} foloving you`,
+        };
+      }
+      throw new HttpException('User not found..', HttpStatus.BAD_REQUEST);
+    } catch (error) {
+      return error;
+    }
+  }
+
+  async subscribeReject(accsesToken: string, subRequestId: string) {
+    try {
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
+      const user = await this.usersRepository.findOne({
+        where: { userId: reqUserId },
+      });
+      if (user) {
+        const subRequest = await this.subscribeRequests.findOne({
+          where: {
+            user: user.userId,
+            requestId: subRequestId,
+          },
+        });
+        if (subRequest) {
+          await subRequest.destroy();
+          return {
+            message: `Subscribe request was rejected`,
+          };
+        }
+        throw new HttpException(
+          'Subscribe request not found',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      throw new HttpException('User not found..', HttpStatus.BAD_REQUEST);
     } catch (error) {
       return error;
     }

@@ -24,7 +24,9 @@ import { CreateCommentsDto } from '../comments/dto/comments.dto';
 import { UpdateCommentsDto } from '../comments/dto/comments-update.dto';
 import { DeleteCommentsDto } from '../comments/dto/comment-delete.dto';
 import { CommentsService } from '../comments/comments.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Posts operations')
 @Controller('posts')
 export class PostsController {
   constructor(

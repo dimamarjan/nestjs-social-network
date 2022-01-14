@@ -18,6 +18,8 @@ import { UsersFolovers } from './users/models/users-folovers.model';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TokenHeandlerService } from './common/services/token-heandker.service';
+import { SubscribeRequests } from './users/models/users-subscribe-requests.model';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 const dbOptions: SequelizeModuleOptions = {
   dialect: 'postgres',
@@ -43,6 +45,7 @@ const dbOptions: SequelizeModuleOptions = {
     Comments,
     UsersSubscribers,
     UsersFolovers,
+    SubscribeRequests,
   ],
   autoLoadModels: true,
 };
@@ -58,6 +61,7 @@ const dbOptions: SequelizeModuleOptions = {
     CommentsModule,
     NotifyMailerModule,
     SequelizeModule.forFeature([Posts, Users]),
+    EventEmitterModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [TokenHeandlerService, AppService],

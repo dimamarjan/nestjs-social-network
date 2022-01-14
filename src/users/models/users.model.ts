@@ -10,6 +10,7 @@ import { PostsMarks } from '../../posts/models/posts-marks.model';
 import { Posts } from '../../posts/models/posts.model';
 import { IUsers } from '../interfaces/user.interface';
 import { UsersFolovers } from './users-folovers.model';
+import { SubscribeRequests } from './users-subscribe-requests.model';
 import { UsersSubscribers } from './users-subscribers.model';
 
 @Table({ tableName: 'users' })
@@ -49,6 +50,9 @@ export class Users extends Model<Users, IUsers> {
   @HasMany(() => UsersFolovers)
   folover: UsersFolovers[];
 
+  @HasMany(() => SubscribeRequests)
+  subRequests: SubscribeRequests[];
+
   toJSON() {
     return {
       userId: this.userId,
@@ -57,6 +61,7 @@ export class Users extends Model<Users, IUsers> {
       lastName: this.lastName,
       subscribtions: this.subscriber,
       folovers: this.folover,
+      subRequests: this.subRequests,
     };
   }
 }

@@ -11,6 +11,7 @@ import { AuthModule } from '../auth/auth.module';
 import { TokenHeandlerService } from '../common/services/token-heandker.service';
 import { UsersSubscribers } from './models/users-subscribers.model';
 import { UsersFolovers } from './models/users-folovers.model';
+import { SubscribeRequests } from './models/users-subscribe-requests.model';
 
 @Module({
   controllers: [UsersController],
@@ -25,6 +26,7 @@ import { UsersFolovers } from './models/users-folovers.model';
       PostsFilters,
       UsersSubscribers,
       UsersFolovers,
+      SubscribeRequests,
     ]),
     forwardRef(() => AuthModule),
   ],

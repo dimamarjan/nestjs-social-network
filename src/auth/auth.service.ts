@@ -42,11 +42,9 @@ export class AuthService {
     const token = await this.generateToken(newUsersDto);
     return {
       token,
-      user: {
-        userId: newUsersDto.userId,
-        email: newUsersDto.email,
-        firstName: newUsersDto.firstName,
-      },
+      userId: newUsersDto.userId,
+      email: newUsersDto.email,
+      firstName: newUsersDto.firstName,
     };
   }
 
@@ -67,11 +65,9 @@ export class AuthService {
     const token = await this.generateToken(newUsersDto);
     return {
       token,
-      user: {
-        userId: newUsersDto.userId,
-        email: newUsersDto.email,
-        firstName: newUsersDto.firstName,
-      },
+      userId: newUsersDto.userId,
+      email: newUsersDto.email,
+      firstName: newUsersDto.firstName,
     };
   }
 
@@ -88,9 +84,11 @@ export class AuthService {
   private async generateToken(newUsersDto: NewUsersDto) {
     const { userId, email, password } = newUsersDto;
     if (password) {
-      return this.jwtService.sign({ userId, email, password });
+      const token: string = this.jwtService.sign({ userId, email, password });
+      return token;
     }
-    return this.jwtService.sign({ userId, email });
+    const token: string = this.jwtService.sign({ userId, email });
+    return token;
   }
 
   private async userValidation(loginUsersDto: LoginUsersDto) {
