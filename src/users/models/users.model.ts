@@ -62,6 +62,7 @@ export class Users extends Model<Users, IUsers> {
       subscribtions: this.subscriber,
       folovers: this.folover,
       subRequests: this.subRequests,
+      posts: this.postOwner,
     };
   }
 }
