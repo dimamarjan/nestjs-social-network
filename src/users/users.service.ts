@@ -24,6 +24,10 @@ export class UsersService {
     private subEventEmitter: EventEmitter2,
   ) {}
 
+  async createUsers(createUserDto: CreateUsersDto) {
+    return await this.usersRepository.create(createUserDto);
+  }
+
   async getMyPage(accsesToken: string) {
     const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
     return await this.usersRepository.findOne({
@@ -32,8 +36,44 @@ export class UsersService {
     });
   }
 
-  async createUsers(createUserDto: CreateUsersDto) {
-    return await this.usersRepository.create(createUserDto);
+  async getUserPage(accsesToken: string, targetUserId: string) {
+    try {
+      const reqUserId = this.tokenHeandlerService.getUserId(accsesToken);
+      const user = await this.usersRepository.findOne({
+        where: { userId: reqUserId },
+      });
+      const targetUser = await this.usersRepository.findOne({
+        where: { userId: targetUserId },
+      });
+      if (user && targetUser) {
+        const isSubscribe = await this.usersRepository.findOne({
+          where: {
+            userId: reqUserId,
+          },
+          include: {
+            model: UsersSubscribers,
+            as: 'subscriber',
+            where: {
+              userId: targetUserId,
+            },
+          },
+        });
+        if (isSubscribe) {
+          const openUserData = await this.usersRepository.findOne({
+            where: { userId: targetUserId },
+            include: { all: true },
+          });
+          return openUserData;
+        }
+        const closeUserData = await this.usersRepository.findOne({
+          where: { userId: targetUserId },
+        });
+        return closeUserData;
+      }
+      throw new HttpException('User not found..', HttpStatus.BAD_REQUEST);
+    } catch (error) {
+      return error;
+    }
   }
 
   async subscribe(accsesToken: string, subUserDto: SubUserDto) {

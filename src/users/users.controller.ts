@@ -21,10 +21,20 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Get('/user')
+  @Get('/mypage')
   @UsePipes(ValidationPipe)
-  getUser(@Headers('authorization') accsesToken: string) {
+  userPage(@Headers('authorization') accsesToken: string) {
     return this.usersService.getMyPage(accsesToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/:id')
+  @UsePipes(ValidationPipe)
+  getUser(
+    @Headers('authorization') accsesToken: string,
+    @Param('id') targetUserId: string,
+  ) {
+    return this.usersService.getUserPage(accsesToken, targetUserId);
   }
 
   @UseGuards(JwtAuthGuard)
