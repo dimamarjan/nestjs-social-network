@@ -38,7 +38,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('/subscribe/:id/accept')
+  @Post('/subscribe/:id')
   @UsePipes(ValidationPipe)
   subscribeAccept(
     @Headers('authorization') accsesToken: string,
@@ -48,7 +48,7 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete('/subscribe/:id/reject')
+  @Delete('/subscribe/:id')
   @UsePipes(ValidationPipe)
   subscribeReject(
     @Headers('authorization') accsesToken: string,
